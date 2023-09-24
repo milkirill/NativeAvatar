@@ -10,31 +10,31 @@ import UIKit
 final class ViewController: UIViewController {
     private let imageSize: CGFloat = 36
     private let imageRightMargin: CGFloat = 16
-    private let imageBottomMargin: CGFloat = 8
-    private let navBarHeightSmallState: CGFloat = 44
-    private let navBarHeightLargeState: CGFloat = 96.5
+    private let titleText = "Avatar"
 
     private let imageView: UIImageView = {
         let view = UIImageView()
-        let image = UIImage(systemName: "person.crop.circle.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 30))
-        view.image = image
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.image = UIImage(systemName: "person.crop.circle.fill")
         view.tintColor = .systemGray
         return view
     }()
-    private var imageViewHeightConstraint: NSLayoutConstraint!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-
         configureScrollView()
         configureNavBar()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        configureAvatar()
+    }
+    
     private func configureScrollView() {
         let scrollView = UIScrollView()
+        scrollView.backgroundColor = .systemBackground
         scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.delegate = self
         view.addSubview(scrollView)
         
         NSLayoutConstraint.activate([
@@ -46,35 +46,24 @@ final class ViewController: UIViewController {
         
         scrollView.contentSize = CGSize(width: view.frame.width, height: 1500)
     }
+    
     private func configureNavBar() {
-        guard let navigationBar = navigationController?.navigationBar else { return }
-
-        navigationBar.prefersLargeTitles = true
-        title = "Avatar"
-
-        navigationBar.addSubview(imageView)
-        imageView.clipsToBounds = true
-        imageView.contentMode = .bottom
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        
-        imageViewHeightConstraint = imageView.heightAnchor.constraint(equalToConstant: imageSize)
-        NSLayoutConstraint.activate([
-            imageView.rightAnchor.constraint(equalTo: navigationBar.rightAnchor, constant: -imageRightMargin),
-            imageView.bottomAnchor.constraint(equalTo: navigationBar.bottomAnchor, constant: -imageBottomMargin),
-            imageViewHeightConstraint,
-        ])
+        title = titleText
+        navigationController?.navigationBar.prefersLargeTitles = true
     }
     
-    private func resizeImage(for navBarHeight: CGFloat) {
-        let coeff: CGFloat = (navBarHeight - navBarHeightSmallState) / (navBarHeightLargeState - navBarHeightSmallState)
-        imageViewHeightConstraint.constant = imageSize * min(1.0, coeff)
-    }
-
-}
-
-extension ViewController: UIScrollViewDelegate {
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        guard let navBarHeight = navigationController?.navigationBar.frame.height else { return }
-        resizeImage(for: navBarHeight)
+    private func configureAvatar() {
+        guard let largeTitleView = navigationController?.navigationBar.subviews.first(where: { NSStringFromClass($0.classForCoder) == "_UINavigationBarLargeTitleView" }),
+              let largeLabel = largeTitleView.subviews.first(where: { ($0 as? UILabel)?.text == titleText })
+        else { return }
+        
+        largeTitleView.addSubview(imageView)
+        
+        NSLayoutConstraint.activate([
+            imageView.rightAnchor.constraint(equalTo: largeTitleView.rightAnchor, constant: -imageRightMargin),
+            imageView.centerYAnchor.constraint(equalTo: largeLabel.centerYAnchor),
+            imageView.heightAnchor.constraint(equalToConstant: imageSize),
+            imageView.widthAnchor.constraint(equalTo: imageView.heightAnchor),
+        ])
     }
 }
